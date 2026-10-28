@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PINK NOISE + RTA - By Bos</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;color:#fff;font-family:system-ui,sans-serif}
+.header{padding:15px;text-align:center;background:#111;border-bottom:2px solid #ff0066}
+.header h1{font-size:22px;color:#ff0066}
+.controls{display:flex;justify-content:center;gap:10px;padding:15px;background:#151515;flex-wrap:wrap}
+button{padding:12px 28px;border:none;border-radius:30px;font-weight:bold;cursor:pointer}
+#playBtn{background:#ff0066;color:#fff}
+#playBtn.playing{background:#00ff88;color:#000}
+#stopBtn{background:#333;color:#fff}
+canvas{display:block;width:100%;height:70vh;background:#0a0a0a}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>PINK NOISE + RTA ANALYZER</h1>
+<p>REAL TIME ANALYZER • 20Hz - 20kHz</p>
+</div>
+<div class="controls">
+<button id="playBtn" onclick="togglePink()">▶ PLAY PINK NOISE</button>
+<button id="stopBtn" onclick="stopNoise()">■ STOP</button>
+VOL <input type="range" id="vol" min="0" max="100" value="30" oninput="setVol(this.value)"> <span id="volText">30%</span>
+</div>
+<canvas id="canvas"></canvas>
+<script>
+let audioCtx, source, gainNode, analyser, isPlaying=false;
+const canvas=document.getElementById('canvas'); const ctx=canvas.getContext('2d');
+function resize(){canvas.width=canvas.clientWidth*2;canvas.height=canvas.clientHeight*2;}
+window.addEventListener('resize',resize);resize();
+function createPinkNoiseBuffer(ctx){
+  const bufferSize=ctx.sampleRate*5; const buffer=ctx.createBuffer(1,bufferSize,ctx.sampleRate);
+  const data=buffer.getChannelData(0); let b0,b1,b2,b3,b4,b5,b6; b0=b1=b2=b3=b4=b5=b6=0;
+  for(let i=0;i<bufferSize;i++){const w=Math.random()*2-1;
+    b0=0.99886*b0+w*0.0555179; b1=0.99332*b1+w*0.0750759; b2=0.96900*b2+w*0.1538520;
+    b3=0.86650*b3+w*0.3104856; b4=0.55*b4+w*0.5329522; b5=-0.7616*b5-w*0.0168980;
+    data[i]=(b0+b1+b2+b3+b4+b5+b6+w*0.5362)*0.11; b6=w*0.115926;}
+  return buffer;
+}
+function togglePink(){if(!isPlaying) startNoise(); else stopNoise();}
+function startNoise(){
+  if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:48000});
+  const buffer=createPinkNoiseBuffer(audioCtx); source=audioCtx.createBufferSource();
+  source.buffer=buffer; source.loop=true; gainNode=audioCtx.createGain();
+  gainNode.gain.value=document.getElementById('vol').value/100*0.7;
+  analyser=audioCtx.createAnalyser(); analyser.fftSize=8192; analyser.smoothingTimeConstant=0.8;
+  source.connect(gainNode); gainNode.connect(analyser); analyser.connect(audioCtx.destination);
+  source.start(); isPlaying=true; document.getElementById('playBtn').textContent='⏸ PAUSE';
+  document.getElementById('playBtn').classList.add('playing'); drawRTA();
+}
+function stopNoise(){if(source){try{source.stop()}catch(e){} source=null;} isPlaying=false;
+  document.getElementById('playBtn').textContent='▶ PLAY PINK NOISE'; document.getElementById('playBtn').classList.remove('playing');}
+function setVol(v){document.getElementById('volText').textContent=v+'%'; if(gainNode) gainNode.gain.value=v/100*0.7;}
+function drawRTA(){
+  const freqData=new Uint8Array(analyser.frequencyBinCount); const width=canvas.width, height=canvas.height;
+  function loop(){requestAnimationFrame(loop); analyser.getByteFrequencyData(freqData);
+    ctx.clearRect(0,0,width,height);
+    const barCount=64; const barW=width/barCount;
+    for(let i=0;i<barCount;i++){const logIdx=Math.pow(2,(i/barCount)*12)-1;
+      const idx=Math.floor((logIdx/4096)*freqData.length); const val=freqData[Math.min(idx,freqData.length-1)];
+      const barH=(val/255)*height*0.9; const x=i*barW; const y=height-barH;
+      ctx.fillStyle='#ff0066'; ctx.fillRect(x+2,y,barW-4,barH);}
+  }loop();
+}
+</script>
+</body>
+</html>
