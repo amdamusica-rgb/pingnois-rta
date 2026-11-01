@@ -27,7 +27,7 @@ footer{text-align:center;padding:3px;font-size:8px;color:#333;flex-shrink:0}
 </style>
 </head>
 <body>
-<header>.::SOUND METER AMDA AUDIO;::.</header>
+<header>.::SOUND METER AMDA AUDIO::.</header>
 <div id="dbBig"><div id="dbNum">--.- dB SPL</div><div id="peak">PEAK: --.- dB • TAP RESET</div></div>
 <div id="wrap"><div id="dbScale"><span>0</span><span>-10</span><span>-20</span><span>-30</span><span>-40</span><span>-50</span><span>-60</span></div><div id="canvasBox"><canvas id="c"></canvas></div></div>
 <div id="freqLabel"><span>20Hz</span><span>1kHz</span><span>20kHz</span></div>
@@ -35,7 +35,7 @@ footer{text-align:center;padding:3px;font-size:8px;color:#333;flex-shrink:0}
 <button id="micBtn">🟧 START MIC</button>
 <button id="pinkBtn">🔴 PLAY PINK NOISE</button>
 </div>
-<footer>AMDA AUDIO BANGOREJO • WHITE dB ELEGANT</footer>
+<footer>AMDA AUDIO BWI</footer>
 <script>
 const canvas=document.getElementById('c'),ctx=canvas.getContext('2d'),dbNum=document.getElementById('dbNum'),peakEl=document.getElementById('peak');
 let audioCtx,analyser,anim,peak=0;
