@@ -3,80 +3,43 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sound Meter AMDA - AUDIO</title>
+<title>SOUND METER AMDA AUDIO</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#00ff88">
 <style>
-  body { margin:0; background:#0a0a0a; color:#fff; font-family: sans-serif; }
-  header { background:#111; padding:12px; text-align:center; border-bottom:2px solid #00ff88; }
-  h1 { margin:0; font-size:18px; color:#00ff88; }
-  .tabs { display:flex; background:#1a1a1a; }
-  .tab { flex:1; padding:12px; text-align:center; cursor:pointer; border-bottom:3px solid transparent; }
-  .tab.active { border-color:#00ff88; color:#00ff88; background:#222; }
-  canvas { width:100%; height:55vh; background:#000; display:block; }
-  .controls { padding:12px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
-  button { padding:12px 20px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; }
-  .btn-start { background:#00ff88; color:#000; }
-  .btn-stop { background:#ff4444; color:#fff; }
-  .btn-noise { background:#333; color:#fff; border:1px solid #555; }
-  .info { padding:10px; text-align:center; font-size:12px; color:#aaa; }
-  .meter { height:10px; background:#222; margin:10px; border-radius:5px; overflow:hidden; }
-  .meter-fill { height:100%; width:0%; background:linear-gradient(90deg, #00ff88, #ffcc00, #ff4444); transition:width 0.1s; }
+body{margin:0;background:#000;color:#00ff88;font-family:monospace;overflow:hidden}
+h1{margin:0;padding:12px;text-align:center;border-bottom:2px solid #00ff88;font-size:18px}
+.tabs{display:flex;border-bottom:1px solid #222}
+.tab{flex:1;padding:12px;text-align:center;color:#555;cursor:pointer;font-weight:bold}
+.tab.active{color:#00ff88;border-bottom:3px solid #00ff88}
+#canvas{width:100%;height:45vh;background:#111;display:block}
+.controls{padding:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+button{padding:14px 20px;background:#00ff88;color:#000;border:none;font-weight:bold;border-radius:8px;font-size:14px;cursor:pointer}
+.info{text-align:center;color:#888;font-size:12px;padding:6px}
 </style>
 </head>
 <body>
-<header><h1></b>SOUND METER AMDA AUDIO</h1></header>
+<h1>🎤 SOUND METER AMDA AUDIO ✓</h1>
 <div class="tabs">
-  <div class="tab active">MAGNITUDE (RTA)</div>
-  <div class="tab">PHASE</div>
-  <div class="tab">IMPULSE</div>
+<div class="tab active">MAGNITUDE (RTA)</div>
+<div class="tab">PHASE</div>
+<div class="tab">IMPULSE</div>
 </div>
 <canvas id="canvas"></canvas>
-<div class="meter"><div id="level" class="meter-fill"></div></div>
 <div class="controls">
-  <button class="btn-start" onclick="startMic()">🎤 START MIC</button>
-  <button class="btn-stop" onclick="stopMic()">STOP</button>
-  <button class="btn-noise" onclick="playNoise()">🔊 PLAY PINK NOISE</button>
+<button id="btnMic">🎙️ START MIC</button>
+<button id="btnNoise">🔊 PLAY PINK NOISE</button>
 </div>
-<div class="info" id="info">Klik START MIC bos!</div>
+<div class="info">AMDA AUDIO BANGOREJO • OFFLINE MODE READY ✓</div>
 <script>
-let audioCtx, analyser, dataArray, animId, noiseNode=null;
-const canvas=document.getElementById('canvas'); const ctx=canvas.getContext('2d');
-function resize(){ canvas.width=canvas.clientWidth*2; canvas.height=canvas.clientHeight*2; }
-window.onresize=resize; resize();
-async function startMic(){
-    audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-    const stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:false}});
-    const source = audioCtx.createMediaStreamSource(stream);
-    analyser = audioCtx.createAnalyser(); analyser.fftSize = 2048; analyser.smoothingTimeConstant=0.8;
-    source.connect(analyser); dataArray = new Uint8Array(analyser.frequencyBinCount);
-    draw();
-}
-function stopMic(){ if(animId) cancelAnimationFrame(animId); if(audioCtx) audioCtx.close(); }
-function playNoise(){
-  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-  if(noiseNode){ noiseNode.stop(); noiseNode=null; return; }
-  const bufferSize = audioCtx.sampleRate*2;
-  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-  const output = buffer.getChannelData(0);
-  let b0,b1,b2,b3,b4,b5,b6; b0=b1=b2=b3=b4=b5=b6=0;
-  for(let i=0;i<bufferSize;i++){
-    const white=Math.random()*2-1;
-    b0=0.99886*b0+white*0.0555179; b1=0.99332*b1+white*0.0750759;
-    b2=0.96900*b2+white*0.1538520; b3=0.86650*b3+white*0.3104856;
-    b4=0.55000*b4+white*0.5329522; b5=-0.7616*b5-0.0168980*white;
-    output[i]=(b0+b1+b2+b3+b4+b5+b6+white*0.5362)*0.11; b6=white*0.115926;
-  }
-  noiseNode=audioCtx.createBufferSource(); noiseNode.buffer=buffer; noiseNode.loop=true;
-  noiseNode.connect(audioCtx.destination); noiseNode.start();
-}
-function draw(){
-  animId=requestAnimationFrame(draw); if(!analyser) return;
-  analyser.getByteFrequencyData(dataArray);
-  const W=canvas.width, H=canvas.height;
-  ctx.fillStyle="#000"; ctx.fillRect(0,0,W,H);
-  ctx.fillStyle="#00ff88"; const barW=W/dataArray.length*2.5; let x=0; let sum=0;
-  for(let i=0;i<dataArray.length;i++){ const v=dataArray[i]; sum+=v; const h=v/255*H*0.9; ctx.fillRect(x, H-h, barW, h); x+=barW; }
-  document.getElementById('level').style.width=(sum/dataArray.length/255*100)+"%";
-}
+const canvas=document.getElementById('canvas');const ctx=canvas.getContext('2d');
+function resize(){canvas.width=canvas.clientWidth*2;canvas.height=canvas.clientHeight*2;}resize();
+let audioCtx,analyser,dataArray,source,noiseNode;let isMic=false;
+function draw(){requestAnimationFrame(draw);if(!analyser) return;analyser.getByteFrequencyData(dataArray);ctx.fillStyle='#111';ctx.fillRect(0,0,canvas.width,canvas.height);const barWidth=canvas.width/dataArray.length*2.5;let x=0;for(let i=0;i<dataArray.length;i++){const barHeight=dataArray[i]*2;ctx.fillStyle=i<20?'#00ff88':i<60?'#88ff00':'#ffaa00';ctx.fillRect(x,canvas.height-barHeight,barWidth,barHeight);x+=barWidth+1;}ctx.fillStyle='#333';ctx.font='20px monospace';ctx.fillText('20Hz',10,canvas.height-10);ctx.fillText('1kHz',canvas.width/2-30,canvas.height-10);ctx.fillText('20kHz',canvas.width-100,canvas.height-10);}draw();
+async function startMic(){try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();const stream=await navigator.mediaDevices.getUserMedia({audio:true});analyser=audioCtx.createAnalyser();analyser.fftSize=256;dataArray=new Uint8Array(analyser.frequencyBinCount);source=audioCtx.createMediaStreamSource(stream);source.connect(analyser);isMic=true;document.getElementById('btnMic').innerText='⏹️ STOP MIC';}catch(e){alert('Mic error bos: '+e.message)}}function stopMic(){if(audioCtx) audioCtx.close();analyser=null;isMic=false;document.getElementById('btnMic').innerText='🎙️ START MIC';}
+document.getElementById('btnMic').onclick=()=>{isMic?stopMic():startMic();};
+document.getElementById('btnNoise').onclick=async()=>{if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(noiseNode){noiseNode.stop();noiseNode=null;document.getElementById('btnNoise').innerText='🔊 PLAY PINK NOISE';return;}const bufferSize=audioCtx.sampleRate*2;const buffer=audioCtx.createBuffer(1,bufferSize,audioCtx.sampleRate);const output=buffer.getChannelData(0);let b0,b1,b2,b3,b4,b5,b6;b0=b1=b2=b3=b4=b5=b6=0;for(let i=0;i<bufferSize;i++){const white=Math.random()*2-1;b0=0.99886*b0+white*0.0555179;b1=0.99332*b1+white*0.0750759;b2=0.96900*b2+white*0.1538520;b3=0.86650*b3+white*0.3104856;b4=0.55000*b4+white*0.5329522;b5=-0.7616*b5-white*0.0168980;output[i]=(b0+b1+b2+b3+b4+b5+b6+white*0.5362)*0.11;b6=white*0.115926;}noiseNode=audioCtx.createBufferSource();noiseNode.buffer=buffer;noiseNode.loop=true;analyser=audioCtx.createAnalyser();analyser.fftSize=256;dataArray=new Uint8Array(analyser.frequencyBinCount);noiseNode.connect(analyser);noiseNode.connect(audioCtx.destination);noiseNode.start();document.getElementById('btnNoise').innerText='⏹️ STOP NOISE';};
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(()=>console.log('SW Ready'));}
 </script>
 </body>
 </html>
