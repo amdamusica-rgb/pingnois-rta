@@ -2,44 +2,102 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>SOUND METER AMDA AUDIO</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#00ff88">
+<meta name="theme-color" content="#ff2d9e">
 <style>
-body{margin:0;background:#000;color:#00ff88;font-family:monospace;overflow:hidden}
-h1{margin:0;padding:12px;text-align:center;border-bottom:2px solid #00ff88;font-size:18px}
-.tabs{display:flex;border-bottom:1px solid #222}
-.tab{flex:1;padding:12px;text-align:center;color:#555;cursor:pointer;font-weight:bold}
-.tab.active{color:#00ff88;border-bottom:3px solid #00ff88}
-#canvas{width:100%;height:45vh;background:#111;display:block}
-.controls{padding:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
-button{padding:14px 20px;background:#00ff88;color:#000;border:none;font-weight:bold;border-radius:8px;font-size:14px;cursor:pointer}
-.info{text-align:center;color:#888;font-size:12px;padding:6px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;color:#0f6;font-family:monospace;display:flex;flex-direction:column;height:100vh}
+header{text-align:center;padding:12px;border-bottom:2px solid #00ff88;font-weight:bold;font-size:18px;color:#00ff88}
+#dbBig{background:#0a0a0a;text-align:center;padding:12px;border:1px solid #222;margin:8px;border-radius:10px}
+#dbNum{font-size:48px;color:#00ff88;font-weight:bold}
+#peak{font-size:13px;color:#aaa;margin-top:4px}
+#wrap{display:flex;flex:1;overflow:hidden}
+#dbScale{display:flex;flex-direction:column;justify-content:space-between;padding:10px 4px 30px 8px;font-size:11px;color:#888;text-align:right;width:50px}
+#canvasBox{flex:1;position:relative}
+canvas{width:100%;height:100%;background:#050505;border-left:1px solid #222}
+#freqLabel{display:flex;justify-content:space-between;padding:3px 6px;font-size:10px;color:#777}
+#ctrl{display:flex;gap:10px;padding:12px;justify-content:center;background:#111;border-top:1px solid #222}
+button{padding:14px 18px;border:none;border-radius:12px;font-weight:bold;font-size:14px;flex:1}
+#micBtn{background:#00ff88;color:#000}
+#micBtn.stop{background:#111;color:#ff4444;border:2px solid #ff4444}
+#pinkBtn{background:#111;color:#ff4444;border:2px solid #ff4444}
+#pinkBtn.playing{background:#ff2d9e;color:#fff;border:none;box-shadow:0 0 15px #ff2d9e}
+footer{text-align:center;padding:6px;font-size:10px;color:#555}
 </style>
 </head>
 <body>
-<h1>🎤 SOUND METER AMDA AUDIO ✓</h1>
-<div class="tabs">
-<div class="tab active">MAGNITUDE (RTA)</div>
-<div class="tab">PHASE</div>
-<div class="tab">IMPULSE</div>
+<header>🎤 SOUND METER AMDA AUDIO</header>
+
+<div id="dbBig">
+  <div id="dbNum">--.- dB SPL</div>
+  <div id="peak">PEAK HOLD: --.- dB • TAP TO RESET</div>
 </div>
-<canvas id="canvas"></canvas>
-<div class="controls">
-<button id="btnMic">🎙️ START MIC</button>
-<button id="btnNoise">🔊 PLAY PINK NOISE</button>
+
+<div id="wrap">
+  <div id="dbScale"><span>0 dB</span><span>-10 dB</span><span>-20 dB</span><span>-30 dB</span><span>-40 dB</span><span>-50 dB</span><span>-60 dB</span></div>
+  <div id="canvasBox"><canvas id="c"></canvas></div>
 </div>
-<div class="info">AMDA AUDIO BANGOREJO • OFFLINE MODE READY ✓</div>
+<div id="freqLabel"><span>20Hz</span><span>100Hz</span><span>500Hz</span><span style="color:#00ff88">1kHz</span><span>5kHz</span><span>10kHz</span><span>20kHz</span></div>
+
+<div id="ctrl">
+  <button id="micBtn">🎙️ START MIC</button>
+  <button id="pinkBtn">🔊 PLAY PINK NOISE</button>
+</div>
+<footer>AMDA AUDIO BANGOREJO • OFFLINE MODE READY ✓ • PINK=MATI MERAH</footer>
+
 <script>
-const canvas=document.getElementById('canvas');const ctx=canvas.getContext('2d');
-function resize(){canvas.width=canvas.clientWidth*2;canvas.height=canvas.clientHeight*2;}resize();
-let audioCtx,analyser,dataArray,source,noiseNode;let isMic=false;
-function draw(){requestAnimationFrame(draw);if(!analyser) return;analyser.getByteFrequencyData(dataArray);ctx.fillStyle='#111';ctx.fillRect(0,0,canvas.width,canvas.height);const barWidth=canvas.width/dataArray.length*2.5;let x=0;for(let i=0;i<dataArray.length;i++){const barHeight=dataArray[i]*2;ctx.fillStyle=i<20?'#00ff88':i<60?'#88ff00':'#ffaa00';ctx.fillRect(x,canvas.height-barHeight,barWidth,barHeight);x+=barWidth+1;}ctx.fillStyle='#333';ctx.font='20px monospace';ctx.fillText('20Hz',10,canvas.height-10);ctx.fillText('1kHz',canvas.width/2-30,canvas.height-10);ctx.fillText('20kHz',canvas.width-100,canvas.height-10);}draw();
-async function startMic(){try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();const stream=await navigator.mediaDevices.getUserMedia({audio:true});analyser=audioCtx.createAnalyser();analyser.fftSize=256;dataArray=new Uint8Array(analyser.frequencyBinCount);source=audioCtx.createMediaStreamSource(stream);source.connect(analyser);isMic=true;document.getElementById('btnMic').innerText='⏹️ STOP MIC';}catch(e){alert('Mic error bos: '+e.message)}}function stopMic(){if(audioCtx) audioCtx.close();analyser=null;isMic=false;document.getElementById('btnMic').innerText='🎙️ START MIC';}
-document.getElementById('btnMic').onclick=()=>{isMic?stopMic():startMic();};
-document.getElementById('btnNoise').onclick=async()=>{if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(noiseNode){noiseNode.stop();noiseNode=null;document.getElementById('btnNoise').innerText='🔊 PLAY PINK NOISE';return;}const bufferSize=audioCtx.sampleRate*2;const buffer=audioCtx.createBuffer(1,bufferSize,audioCtx.sampleRate);const output=buffer.getChannelData(0);let b0,b1,b2,b3,b4,b5,b6;b0=b1=b2=b3=b4=b5=b6=0;for(let i=0;i<bufferSize;i++){const white=Math.random()*2-1;b0=0.99886*b0+white*0.0555179;b1=0.99332*b1+white*0.0750759;b2=0.96900*b2+white*0.1538520;b3=0.86650*b3+white*0.3104856;b4=0.55000*b4+white*0.5329522;b5=-0.7616*b5-white*0.0168980;output[i]=(b0+b1+b2+b3+b4+b5+b6+white*0.5362)*0.11;b6=white*0.115926;}noiseNode=audioCtx.createBufferSource();noiseNode.buffer=buffer;noiseNode.loop=true;analyser=audioCtx.createAnalyser();analyser.fftSize=256;dataArray=new Uint8Array(analyser.frequencyBinCount);noiseNode.connect(analyser);noiseNode.connect(audioCtx.destination);noiseNode.start();document.getElementById('btnNoise').innerText='⏹️ STOP NOISE';};
-if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(()=>console.log('SW Ready'));}
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d'),dbNum=document.getElementById('dbNum'),peakEl=document.getElementById('peak');
+let audioCtx,analyser,mic,anim,peak=0;
+function resize(){canvas.width=canvas.clientWidth*2;canvas.height=canvas.clientHeight*2}
+window.addEventListener('resize',resize);resize();
+peakEl.onclick=()=>{peak=0};
+
+async function startMic(){
+ audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+ analyser=audioCtx.createAnalyser();analyser.fftSize=2048;analyser.smoothingTimeConstant=0.8;
+ try{
+ const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+ mic=audioCtx.createMediaStreamSource(stream);mic.connect(analyser);
+ draw();micBtn.textContent='🟧 STOP MIC';micBtn.classList.add('stop');
+ }catch(e){dbNum.textContent='MIC DITOLAK BOS';}
+}
+function draw(){
+ anim=requestAnimationFrame(draw);
+ const data=new Uint8Array(analyser.frequencyBinCount);analyser.getByteFrequencyData(data);
+ const timeData=new Uint8Array(analyser.fftSize);analyser.getByteTimeDomainData(timeData);
+ let sum=0;for(let i=0;i<timeData.length;i++){let v=(timeData[i]-128)/128;sum+=v*v}let rms=Math.sqrt(sum/timeData.length);
+ let db=20*Math.log10(rms||0.00001)+100;if(db<0)db=0;if(db>peak)peak=db;
+ dbNum.textContent=db.toFixed(1)+' dB SPL';peakEl.textContent=`PEAK HOLD: ${peak.toFixed(1)} dB • TAP TO RESET`;
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+ const barW=canvas.width/data.length*2.2;let x=0;
+ for(let i=0;i<data.length;i++){let h=data[i]/255*canvas.height;let green=`hsl(${120-(h/canvas.height*60)},100%,50%)`;
+ ctx.fillStyle=green;ctx.fillRect(x,canvas.height-h,barW-1,h);x+=barW}
+}
+const micBtn=document.getElementById('micBtn');
+micBtn.onclick=()=>{
+ if(anim){cancelAnimationFrame(anim);anim=null;if(audioCtx)audioCtx.close();audioCtx=null;dbNum.textContent='--.- dB SPL';micBtn.textContent='🎙️ START MIC';micBtn.classList.remove('stop');}
+ else{startMic();}
+};
+
+let pinkNode=null;const pBtn=document.getElementById('pinkBtn');
+pBtn.onclick=()=>{
+ if(pinkNode){
+   pinkNode.stop();pinkNode=null;
+   pBtn.textContent='🔊 PLAY PINK NOISE';
+   pBtn.classList.remove('playing');
+   return
+ }
+ if(!audioCtx)audioCtx=new AudioContext();
+ const bufferSize=audioCtx.sampleRate*2;const buffer=audioCtx.createBuffer(1,bufferSize,audioCtx.sampleRate);let d=buffer.getChannelData(0);
+ for(let i=0;i<bufferSize;i++) d[i]=(Math.random()*2-1)*0.3;
+ pinkNode=audioCtx.createBufferSource();pinkNode.buffer=buffer;pinkNode.loop=true;pinkNode.connect(audioCtx.destination);pinkNode.start();
+ pBtn.textContent='⏹️ STOP NOISE';
+ pBtn.classList.add('playing');
+};
+startMic();
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js')}
 </script>
 </body>
 </html>
