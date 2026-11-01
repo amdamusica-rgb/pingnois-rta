@@ -2,31 +2,32 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>AMDA AUDIO - PINK FINAL</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>AMDA AUDIO - SOUND METER</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#000;color:#00ff88;font-family:monospace;display:flex;flex-direction:column;height:100vh;overflow:hidden}
-header{text-align:center;padding:10px;font-weight:bold;letter-spacing:1px;color:#00ff88;border-bottom:1px solid #1a1a1a}
-#dbBig{background:#0f0f0f;text-align:center;padding:10px 0 8px;border:1px solid #1e1e1e;margin:6px 6px 0;border-radius:8px}
-#dbNum{font-size:44px;font-weight:900;color:#00ff88;text-shadow:0 0 12px #00ff88;letter-spacing:-1px}
-#peak{font-size:11px;color:#aaa;margin-top:2px;letter-spacing:1px}
-#wrap{display:flex;flex:1;overflow:hidden;margin-top:4px}
-#dbScale{display:flex;flex-direction:column;justify-content:space-between;padding:8px 2px 28px 6px;font-size:11px;color:#666;width:36px;text-align:right}
-#canvasBox{flex:1;position:relative}
-canvas{width:100%;height:100%;background:#000}
-#freqLabel{display:flex;justify-content:space-between;padding:4px 8px 6px 46px;font-size:10px;color:#555;letter-spacing:0.5px}
-#ctrl{display:flex;gap:8px;padding:8px;background:#0a0a0a;border-top:1px solid #1a1a1a;justify-content:center}
-button{padding:10px 14px;border-radius:10px;font-weight:bold;font-size:12px;border:1px solid #222;flex:0;min-width:130px}
+html,body{height:100%;height:100dvh;background:#000;overflow:hidden}
+body{display:flex;flex-direction:column;font-family:monospace;color:#00ff88}
+header{text-align:center;padding:8px;font-size:12px;font-weight:bold;color:#00ff88;border-bottom:1px solid #151515;letter-spacing:1px}
+#dbBig{background:#0f0f0f;text-align:center;padding:8px 0 6px;border:1px solid #1e1e1e;margin:6px 6px 0;border-radius:10px;flex-shrink:0}
+#dbNum{font-size:30px;font-weight:900;color:#ffffff;text-shadow:0 0 14px rgba(255,255,255,0.7);letter-spacing:0.5px;line-height:1.1}
+#peak{font-size:10px;color:#bbbbbb;margin-top:2px;letter-spacing:0.5px}
+#wrap{flex:1;display:flex;min-height:0;margin-top:2px}
+#dbScale{display:flex;flex-direction:column;justify-content:space-between;padding:6px 2px 24px 5px;font-size:10px;color:#555;width:32px;text-align:right;flex-shrink:0}
+#canvasBox{flex:1;min-width:0}
+canvas{width:100%;height:100%;background:#000;display:block}
+#freqLabel{display:flex;justify-content:space-between;padding:3px 8px 4px 40px;font-size:9px;color:#444;flex-shrink:0}
+#ctrl{display:flex;gap:8px;padding:10px 8px calc(10px + env(safe-area-inset-bottom));background:#0a0a0a;border-top:1px solid #1a1a1a;flex-shrink:0}
+button{flex:1;padding:11px 6px;border-radius:10px;font-weight:bold;font-size:11px;min-width:0;white-space:nowrap}
 #micBtn{background:#111;color:#ff3b3b;border:1.5px solid #ff3b3b}
-#micBtn.stop{background:#111;color:#ff3b3b;border:1.5px solid #ff3b3b}
+#micBtn.stop{background:#222;color:#ff3b3b}
 #pinkBtn{background:#111;color:#ff3b3b;border:1.5px solid #ff3b3b}
-#pinkBtn.playing{background:#ff1493;color:#fff;border:1.5px solid #ff1493;box-shadow:0 0 18px #ff1493}
-footer{text-align:center;padding:4px;font-size:9px;color:#444;letter-spacing:1px}
+#pinkBtn.playing{background:#ff1493;color:#fff;border-color:#ff1493;box-shadow:0 0 18px #ff1493}
+footer{text-align:center;padding:3px;font-size:8px;color:#333;flex-shrink:0}
 </style>
 </head>
 <body>
-<header>🎤 SOUND METER AMDA AUDIO • PINK EDITION</header>
+<header>.::SOUND METER AMDA AUDIO;::.</header>
 <div id="dbBig"><div id="dbNum">--.- dB SPL</div><div id="peak">PEAK: --.- dB • TAP RESET</div></div>
 <div id="wrap"><div id="dbScale"><span>0</span><span>-10</span><span>-20</span><span>-30</span><span>-40</span><span>-50</span><span>-60</span></div><div id="canvasBox"><canvas id="c"></canvas></div></div>
 <div id="freqLabel"><span>20Hz</span><span>1kHz</span><span>20kHz</span></div>
@@ -34,12 +35,12 @@ footer{text-align:center;padding:4px;font-size:9px;color:#444;letter-spacing:1px
 <button id="micBtn">🟧 START MIC</button>
 <button id="pinkBtn">🔴 PLAY PINK NOISE</button>
 </div>
-<footer>AMDA AUDIO BANGOREJO • MERAH=MATI • PINK=NYALA</footer>
+<footer>AMDA AUDIO BANGOREJO • WHITE dB ELEGANT</footer>
 <script>
 const canvas=document.getElementById('c'),ctx=canvas.getContext('2d'),dbNum=document.getElementById('dbNum'),peakEl=document.getElementById('peak');
 let audioCtx,analyser,anim,peak=0;
-function resize(){canvas.width=canvas.clientWidth*window.devicePixelRatio;canvas.height=canvas.clientHeight*window.devicePixelRatio}
-window.addEventListener('resize',resize);resize();
+function resize(){canvas.width=canvas.clientWidth*devicePixelRatio;canvas.height=canvas.clientHeight*devicePixelRatio}
+addEventListener('resize',resize);resize();
 peakEl.onclick=()=>{peak=0};
 async function startMic(){
  audioCtx=new (window.AudioContext||window.webkitAudioContext)();
@@ -57,21 +58,18 @@ function draw(){
  dbNum.textContent=db.toFixed(1)+' dB SPL';peakEl.textContent=`PEAK: ${peak.toFixed(1)} dB • TAP RESET`;
  ctx.clearRect(0,0,canvas.width,canvas.height);
  const barW=canvas.width/data.length*1.8;let x=0;
- for(let i=0;i<data.length;i++){let v=data[i];if(v<2)continue;let h=v/255*canvas.height;
- let bright= v>180? '#00ff88' : v>100? '#88ff00' : '#00cc44';
- ctx.fillStyle=bright;ctx.shadowColor=bright;ctx.shadowBlur=v>150?10:0;
- ctx.fillRect(x,canvas.height-h,barW,h);ctx.shadowBlur=0;x+=barW+0.5}
+ for(let i=0;i<data.length;i++){let v=data[i];if(v<3)continue;let h=v/255*canvas.height;
+ let col=v>180?'#00ff88':v>100?'#88ff00':'#00cc44';
+ ctx.fillStyle=col;ctx.fillRect(x,canvas.height-h,barW,h);x+=barW+0.5}
 }
-const micBtn=document.getElementById('micBtn');micBtn.onclick=()=>{
- if(anim){cancelAnimationFrame(anim);anim=null;if(audioCtx)audioCtx.close();audioCtx=null;dbNum.textContent='--.- dB SPL';micBtn.textContent='🟧 START MIC';micBtn.classList.remove('stop');}
- else{startMic();}
-};
+const micBtn=document.getElementById('micBtn');
+micBtn.onclick=()=>{if(anim){cancelAnimationFrame(anim);anim=null;if(audioCtx)audioCtx.close();audioCtx=null;dbNum.textContent='--.- dB SPL';micBtn.textContent='🟧 START MIC';micBtn.classList.remove('stop');}else{startMic();}};
 let pinkNode=null;const pBtn=document.getElementById('pinkBtn');
 pBtn.onclick=()=>{
  if(pinkNode){pinkNode.stop();pinkNode=null;pBtn.textContent='🔴 PLAY PINK NOISE';pBtn.classList.remove('playing');return}
  if(!audioCtx)audioCtx=new AudioContext();
  const sz=audioCtx.sampleRate*2;const buf=audioCtx.createBuffer(1,sz,audioCtx.sampleRate);let d=buf.getChannelData(0);
- for(let i=0;i<sz;i++) d[i]=(Math.random()*2-1)*0.4;
+ for(let i=0;i<sz;i++) d[i]=(Math.random()*2-1)*0.35;
  pinkNode=audioCtx.createBufferSource();pinkNode.buffer=buf;pinkNode.loop=true;pinkNode.connect(audioCtx.destination);pinkNode.start();
  pBtn.textContent='💖 STOP NOISE';pBtn.classList.add('playing');
 };
