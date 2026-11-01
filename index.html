@@ -1,38 +1,82 @@
 <!DOCTYPE html>
-<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PINK + MIC RTA</title>
-<style>body{margin:0;background:#000;color:#fff;font-family:sans-serif;text-align:center}
-h1{color:#ff0066;margin:15px 0 0}canvas{width:100%;height:65vh;background:#111;display:block}
-button{padding:12px 24px;border-radius:30px;border:0;font-weight:bold;margin:6px}
-.pink{background:#ff0066;color:#fff}.mic{background:#00ff88;color:#000}.stop{background:#333;color:#fff}
-.active{outline:3px solid #fff}</style></head>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sound Meter Bangorejo - Pro</title>
+<style>
+  body { margin:0; background:#0a0a0a; color:#fff; font-family: sans-serif; }
+  header { background:#111; padding:12px; text-align:center; border-bottom:2px solid #00ff88; }
+  h1 { margin:0; font-size:18px; color:#00ff88; }
+  .tabs { display:flex; background:#1a1a1a; }
+  .tab { flex:1; padding:12px; text-align:center; cursor:pointer; border-bottom:3px solid transparent; }
+  .tab.active { border-color:#00ff88; color:#00ff88; background:#222; }
+  canvas { width:100%; height:55vh; background:#000; display:block; }
+  .controls { padding:12px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+  button { padding:12px 20px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; }
+  .btn-start { background:#00ff88; color:#000; }
+  .btn-stop { background:#ff4444; color:#fff; }
+  .btn-noise { background:#333; color:#fff; border:1px solid #555; }
+  .info { padding:10px; text-align:center; font-size:12px; color:#aaa; }
+  .meter { height:10px; background:#222; margin:10px; border-radius:5px; overflow:hidden; }
+  .meter-fill { height:100%; width:0%; background:linear-gradient(90deg, #00ff88, #ffcc00, #ff4444); transition:width 0.1s; }
+</style>
+</head>
 <body>
-<h1>PINK NOISE + RTA</h1>
-<p id="mode">MODE: IDLE</p>
-<button class="pink" id="bPink" onclick="modePink()">▶ PINK NOISE</button>
-<button class="mic" id="bMic" onclick="modeMic()">🎤 MIC RTA</button>
-<button class="stop" onclick="stopAll()">■ STOP</button><br>
-VOL <input type="range" id="vol" value="35" oninput="document.getElementById('vt').innerText=this.value+'%'"><span id="vt">35%</span>
-<canvas id="c"></canvas>
+<header><h1>🎤 SOUND METER BANGOREJO v1.0</h1></header>
+<div class="tabs">
+  <div class="tab active">MAGNITUDE (RTA)</div>
+  <div class="tab">PHASE</div>
+  <div class="tab">IMPULSE</div>
+</div>
+<canvas id="canvas"></canvas>
+<div class="meter"><div id="level" class="meter-fill"></div></div>
+<div class="controls">
+  <button class="btn-start" onclick="startMic()">🎤 START MIC</button>
+  <button class="btn-stop" onclick="stopMic()">STOP</button>
+  <button class="btn-noise" onclick="playNoise()">🔊 PLAY PINK NOISE</button>
+</div>
+<div class="info" id="info">Klik START MIC bos!</div>
 <script>
-let ac,src,g,an,ok=false;let c=document.getElementById('c'),x=c.getContext('2d');
-function sz(){c.width=innerWidth*2;c.height=innerHeight}sz();window.addEventListener('resize',sz);
-function pinkBuf(a){let l=a.sampleRate*4,b=a.createBuffer(1,l,a.sampleRate),d=b.getChannelData(0),b0=b1=b2=b3=b4=b5=b6=0;for(let i=0;i<l;i++){let w=Math.random()*2-1;b0=0.99886*b0+w*0.0555179;b1=0.99332*b1+w*0.0750759;b2=0.969*b2+w*0.153852;b3=0.8665*b3+w*0.3104856;b4=0.55*b4+w*0.5329522;b5=-0.7616*b5-w*0.016898;d[i]=(b0+b1+b2+b3+b4+b5+b6+w*0.5362)*0.11;b6=w*0.115926}return b}
-async function modeMic(){
- stopAll();document.getElementById('mode').innerText='MODE: MIC RTA - DENGAR DARI SPEAKER';document.getElementById('bMic').classList.add('active');
- try{
-  if(!ac)ac=new(window.AudioContext||webkitAudioContext)();
-  let stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,autoGainControl:false,noiseSuppression:false}});
-  src=ac.createMediaStreamSource(stream);an=ac.createAnalyser();an.fftSize=2048;an.smoothingTimeConstant=0.7;
-  src.connect(an);ok=true;loop();
- }catch(e){alert('Mic gagal bos, allow mic dulu: '+e)}
+let audioCtx, analyser, dataArray, animId, noiseNode=null;
+const canvas=document.getElementById('canvas'); const ctx=canvas.getContext('2d');
+function resize(){ canvas.width=canvas.clientWidth*2; canvas.height=canvas.clientHeight*2; }
+window.onresize=resize; resize();
+async function startMic(){
+    audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:false}});
+    const source = audioCtx.createMediaStreamSource(stream);
+    analyser = audioCtx.createAnalyser(); analyser.fftSize = 2048; analyser.smoothingTimeConstant=0.8;
+    source.connect(analyser); dataArray = new Uint8Array(analyser.frequencyBinCount);
+    draw();
 }
-function modePink(){
- stopAll();document.getElementById('mode').innerText='MODE: PLAY PINK NOISE - OUTPUT KE MIXER';document.getElementById('bPink').classList.add('active');
- if(!ac)ac=new(window.AudioContext||webkitAudioContext)();let b=pinkBuf(ac);src=ac.createBufferSource();src.buffer=b;src.loop=true;
- g=ac.createGain();g.gain.value=document.getElementById('vol').value/100*0.5;an=ac.createAnalyser();an.fftSize=2048;
- src.connect(g);g.connect(an);an.connect(ac.destination);src.start();ok=true;loop();
+function stopMic(){ if(animId) cancelAnimationFrame(animId); if(audioCtx) audioCtx.close(); }
+function playNoise(){
+  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  if(noiseNode){ noiseNode.stop(); noiseNode=null; return; }
+  const bufferSize = audioCtx.sampleRate*2;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const output = buffer.getChannelData(0);
+  let b0,b1,b2,b3,b4,b5,b6; b0=b1=b2=b3=b4=b5=b6=0;
+  for(let i=0;i<bufferSize;i++){
+    const white=Math.random()*2-1;
+    b0=0.99886*b0+white*0.0555179; b1=0.99332*b1+white*0.0750759;
+    b2=0.96900*b2+white*0.1538520; b3=0.86650*b3+white*0.3104856;
+    b4=0.55000*b4+white*0.5329522; b5=-0.7616*b5-0.0168980*white;
+    output[i]=(b0+b1+b2+b3+b4+b5+b6+white*0.5362)*0.11; b6=white*0.115926;
+  }
+  noiseNode=audioCtx.createBufferSource(); noiseNode.buffer=buffer; noiseNode.loop=true;
+  noiseNode.connect(audioCtx.destination); noiseNode.start();
 }
-function stopAll(){ok=false;if(src)try{src.mediaStream&&src.mediaStream.getTracks().forEach(t=>t.stop());src.stop&&src.stop()}catch(e){}document.getElementById('bPink').classList.remove('active');document.getElementById('bMic').classList.remove('active');document.getElementById('mode').innerText='MODE: STOP';x.clearRect(0,0,c.width,c.height)}
-function loop(){let fd=new Uint8Array(an.frequencyBinCount);(function f(){if(!ok)return;requestAnimationFrame(f);an.getByteFrequencyData(fd);x.clearRect(0,0,c.width,c.height);let bc=64,bw=c.width/bc;for(let i=0;i<bc;i++){let idx=Math.floor(Math.pow(i/bc,1.2)*fd.length),val=fd[idx],h=val/255*c.height*0.9;x.fillStyle=i<20?'#ff0066':'#00ff88';x.fillRect(i*bw,c.height-h,bw-2,h)}})()}
-</script></body></html>
+function draw(){
+  animId=requestAnimationFrame(draw); if(!analyser) return;
+  analyser.getByteFrequencyData(dataArray);
+  const W=canvas.width, H=canvas.height;
+  ctx.fillStyle="#000"; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle="#00ff88"; const barW=W/dataArray.length*2.5; let x=0; let sum=0;
+  for(let i=0;i<dataArray.length;i++){ const v=dataArray[i]; sum+=v; const h=v/255*H*0.9; ctx.fillRect(x, H-h, barW, h); x+=barW; }
+  document.getElementById('level').style.width=(sum/dataArray.length/255*100)+"%";
+}
+</script>
+</body>
+</html>
