@@ -1,13 +1,13 @@
 {
   "name": "AMDA AUDIO RTA",
   "short_name": "AMDA AUDIO",
-  "start_url": "./?pwa=1",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/138/138817.png",
+      "src": "icon.png",
       "sizes": "512x512",
       "type": "image/png"
     }
