@@ -38,11 +38,13 @@ footer{text-align:center;padding:3px;font-size:8px;color:#333;flex-shrink:0}
 </div>
 <footer>AMDA AUDIO BWI</footer>
 <script>
-const canvas=document.getElementById('c'),ctx=canvas.getContext('2d'),dbNum=document.getElementById('dbNum'),peakEl=document.getElementById('peak');
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d'),dbNum=document.getElementById('dbNum'),peakEl=document.getElementById('peak'),dbBig=document.getElementById('dbBig');
 let audioCtx,analyser,anim,peak=0;
 function resize(){canvas.width=canvas.clientWidth*devicePixelRatio;canvas.height=canvas.clientHeight*devicePixelRatio}
 addEventListener('resize',resize);resize();
-peakEl.onclick=()=>{peak=0};
+function resetPeak(){peak=0;peakEl.innerHTML=`PEAK: --.- dB • TAP <span>RESET</span>`;}
+dbBig.onclick=resetPeak;
+dbBig.ontouchend=(e)=>{e.preventDefault();resetPeak()};
 async function startMic(){
  audioCtx=new (window.AudioContext||window.webkitAudioContext)();
  analyser=audioCtx.createAnalyser();analyser.fftSize=4096;analyser.smoothingTimeConstant=0.85;
